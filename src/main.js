@@ -552,7 +552,7 @@ if (testimonialSlider) {
   testimonialSlider.addEventListener('mouseleave', () => {
     autoSlideInterval = setInterval(() => {
       updateSlider(currentSlideIdx + 1);
-    }, 1200);
+    }, 6000);
   });
 }
 
