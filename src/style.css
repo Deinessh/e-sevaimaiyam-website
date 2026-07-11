@@ -1224,6 +1224,17 @@ body.dark-mode .sc-icon {
   position: relative;
 }
 
+.booking-info-panel .badge-light {
+  background: rgba(255, 255, 255, 0.22);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  backdrop-filter: blur(8px);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
 .booking-info-panel h2 {
   color: #ffffff;
   font-size: 2.25rem;
@@ -2893,11 +2904,18 @@ body.dark-mode .why-graphic .image-wrapper {
   max-height: 82px;
   width: auto;
   object-fit: contain;
-  border-radius: 8px;
-  background: #ffffff;
-  padding: 4px 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  background: transparent;
+  padding: 0;
+  box-shadow: none;
+  mix-blend-mode: multiply;
   transition: transform 0.3s ease;
+}
+
+body.dark-mode .brand-logo-img {
+  background: rgba(255, 255, 255, 0.95);
+  padding: 4px 12px;
+  border-radius: 8px;
+  mix-blend-mode: normal;
 }
 
 .brand-logo-img:hover {
@@ -2905,13 +2923,15 @@ body.dark-mode .why-graphic .image-wrapper {
 }
 
 .footer-brand-logo {
-  height: 54px;
+  height: 96px;
+  max-height: 96px;
   width: auto;
   object-fit: contain;
-  border-radius: 8px;
+  border-radius: 12px;
   background: #ffffff;
-  padding: 4px 12px;
-  margin-bottom: 0.5rem;
+  padding: 6px 16px;
+  margin-bottom: 1rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
 }
 
 /* ==========================================
