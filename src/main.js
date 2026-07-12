@@ -814,40 +814,82 @@ if (blogPostsContainer) {
 async function fetchBlogPosts() {
   blogPostsContainer.innerHTML = '<div class="blog-loading"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading posts...</div>';
   
-  try {
-    const apiUrl = import.meta.env.VITE_API_URL || 'https://e-sevaimaiyam-admin-production.up.railway.app/api/posts';
-    const response = await fetch(apiUrl);
-    
-    if (!response.ok) {
-      throw new Error('Network response was not ok');
+  const endpoints = [
+    import.meta.env.VITE_API_URL,
+    'https://admin.esevaimaiyam.com/api/posts',
+    'https://e-sevaimaiyam-admin-production.up.railway.app/api/posts',
+    '/api/posts'
+  ].filter(Boolean);
+
+  let rawPosts = null;
+  let originHost = 'https://admin.esevaimaiyam.com';
+
+  for (const url of endpoints) {
+    try {
+      const cacheBusterUrl = `${url}${url.includes('?') ? '&' : '?'}_t=${Date.now()}`;
+      const response = await fetch(cacheBusterUrl, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Cache-Control': 'no-cache'
+        },
+        cache: 'no-store'
+      });
+
+      if (response.ok) {
+        const json = await response.json();
+        const extracted = Array.isArray(json) ? json : (json.data || json.posts || json.result || null);
+        if (Array.isArray(extracted)) {
+          rawPosts = extracted;
+          try {
+            originHost = new URL(url).origin;
+          } catch (e) {}
+          break;
+        }
+      }
+    } catch (err) {
+      console.warn(`Failed fetching from ${url}:`, err);
     }
-    
-    const posts = await response.json();
-    
-    if (posts.length === 0) {
-      blogPostsContainer.innerHTML = '<div class="blog-error">No posts found.</div>';
-      return;
-    }
-    
-    blogPostsContainer.innerHTML = posts.map(post => {
-      // Format date from "2026-06-29T14:00:00.000000Z" to readable string or just use as is
-      const dateStr = post.published_at ? new Date(post.published_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Recently';
-      const imageHtml = post.image ? `<div class="blog-card-image" style="width: 100%; height: 220px; overflow: hidden; border-bottom: 1px solid #f1f5f9;"><img src="${post.image}" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s ease;" alt="${post.title}"></div>` : '';
-      
-      return `
-        <div class="blog-card" style="overflow: hidden; display: flex; flex-direction: column;">
-          ${imageHtml}
-          <div class="blog-card-content" style="padding: 1.5rem; flex: 1;">
-            <span class="blog-date">${dateStr}</span>
-            <h3 class="blog-title" style="margin-top: 0.5rem; margin-bottom: 0.75rem;">${post.title}</h3>
-            <div class="blog-excerpt" style="line-height: 1.6; color: var(--text-muted); font-size: 0.95rem;">${post.content}</div>
-          </div>
-        </div>
-      `;
-    }).join('');
-    
-  } catch(err) {
-    console.error('Error fetching posts:', err);
-    blogPostsContainer.innerHTML = '<div class="blog-error">Failed to load posts. Please try again later.</div>';
   }
+
+  if (!rawPosts) {
+    blogPostsContainer.innerHTML = `
+      <div class="blog-error">
+        <p style="margin-bottom: 1rem;">Failed to load posts. Please try again later.</p>
+        <button onclick="window.location.reload()" class="btn btn-primary btn-sm">Retry Loading</button>
+      </div>
+    `;
+    return;
+  }
+
+  if (rawPosts.length === 0) {
+    blogPostsContainer.innerHTML = '<div class="blog-error">No updates or articles published yet. Check back soon!</div>';
+    return;
+  }
+
+  blogPostsContainer.innerHTML = rawPosts.map(post => {
+    const dateStr = post.published_at 
+      ? new Date(post.published_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+      : (post.created_at ? new Date(post.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Recently');
+    
+    let imageUrl = post.image || '';
+    if (imageUrl && imageUrl.startsWith('/')) {
+      imageUrl = `${originHost}${imageUrl}`;
+    }
+
+    const imageHtml = imageUrl 
+      ? `<div class="blog-card-image"><img src="${imageUrl}" alt="${post.title || 'Blog update'}"></div>` 
+      : '';
+    
+    return `
+      <div class="blog-card">
+        ${imageHtml}
+        <div class="blog-card-content">
+          <span class="blog-date">${dateStr}</span>
+          <h3 class="blog-title">${post.title || ''}</h3>
+          <div class="blog-excerpt">${post.content || ''}</div>
+        </div>
+      </div>
+    `;
+  }).join('');
 }
