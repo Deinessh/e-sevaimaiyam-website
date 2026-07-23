@@ -867,7 +867,7 @@ async function fetchBlogPosts() {
     return;
   }
 
-  blogPostsContainer.innerHTML = rawPosts.map(post => {
+  blogPostsContainer.innerHTML = rawPosts.map((post, index) => {
     const dateStr = post.published_at 
       ? new Date(post.published_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
       : (post.created_at ? new Date(post.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Recently');
@@ -877,8 +877,10 @@ async function fetchBlogPosts() {
       imageUrl = `${originHost}${imageUrl}`;
     }
 
+    const postUrl = `post.html?id=${post.id || index}`;
+
     const imageHtml = imageUrl 
-      ? `<div class="blog-card-image"><img src="${imageUrl}" alt="${post.title || 'Blog update'}"></div>` 
+      ? `<div class="blog-card-image"><a href="${postUrl}"><img src="${imageUrl}" alt="${post.title || 'Blog update'}"></a></div>` 
       : '';
     
     return `
@@ -886,10 +888,112 @@ async function fetchBlogPosts() {
         ${imageHtml}
         <div class="blog-card-content">
           <span class="blog-date">${dateStr}</span>
-          <h3 class="blog-title">${post.title || ''}</h3>
-          <div class="blog-excerpt">${post.content || ''}</div>
+          <h3 class="blog-title"><a href="${postUrl}" style="color: inherit; text-decoration: none;">${post.title || ''}</a></h3>
         </div>
       </div>
     `;
   }).join('');
+}
+
+// --------------------------------------------------
+// Single Blog Post Fetch Logic
+// --------------------------------------------------
+const singlePostContainer = document.getElementById('single-post-container');
+
+if (singlePostContainer) {
+  fetchSinglePost();
+}
+
+async function fetchSinglePost() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const postIdOrIndex = urlParams.get('id');
+
+  if (postIdOrIndex === null) {
+    singlePostContainer.innerHTML = '<div class="blog-error">No post specified.</div>';
+    return;
+  }
+
+  const endpoints = [
+    import.meta.env.VITE_API_URL,
+    'https://admin.esevaimaiyam.com/api/posts',
+    'https://e-sevaimaiyam-admin-production.up.railway.app/api/posts',
+    '/api/posts'
+  ].filter(Boolean);
+
+  let rawPosts = null;
+  let originHost = 'https://admin.esevaimaiyam.com';
+
+  for (const url of endpoints) {
+    try {
+      const cacheBusterUrl = `${url}${url.includes('?') ? '&' : '?'}_t=${Date.now()}`;
+      const response = await fetch(cacheBusterUrl, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Cache-Control': 'no-cache'
+        },
+        cache: 'no-store'
+      });
+
+      if (response.ok) {
+        const json = await response.json();
+        const extracted = Array.isArray(json) ? json : (json.data || json.posts || json.result || null);
+        if (Array.isArray(extracted)) {
+          rawPosts = extracted;
+          try {
+            originHost = new URL(url).origin;
+          } catch (e) {}
+          break;
+        }
+      }
+    } catch (err) {
+      console.warn(`Failed fetching from ${url}:`, err);
+    }
+  }
+
+  if (!rawPosts || rawPosts.length === 0) {
+    singlePostContainer.innerHTML = '<div class="blog-error">Failed to load post. Please try again later.</div>';
+    return;
+  }
+
+  // Find the specific post by id or index
+  let post = rawPosts.find(p => p.id == postIdOrIndex);
+  if (!post) {
+    // Fallback to index if not found by id
+    const index = parseInt(postIdOrIndex, 10);
+    if (!isNaN(index) && index >= 0 && index < rawPosts.length) {
+      post = rawPosts[index];
+    }
+  }
+
+  if (!post) {
+    singlePostContainer.innerHTML = '<div class="blog-error">Post not found.</div>';
+    return;
+  }
+
+  const dateStr = post.published_at 
+    ? new Date(post.published_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+    : (post.created_at ? new Date(post.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Recently');
+  
+  let imageUrl = post.image || '';
+  if (imageUrl && imageUrl.startsWith('/')) {
+    imageUrl = `${originHost}${imageUrl}`;
+  }
+
+  const imageHtml = imageUrl 
+    ? `<div class="blog-card-image" style="max-height: 400px; overflow: hidden; border-radius: var(--border-radius-lg); margin-bottom: 2rem;"><img src="${imageUrl}" alt="${post.title || 'Blog update'}" style="width: 100%; height: auto; object-fit: cover;"></div>` 
+    : '';
+
+  singlePostContainer.innerHTML = `
+    <article class="single-post">
+      ${imageHtml}
+      <header class="single-post-header" style="margin-bottom: 2rem;">
+        <span class="blog-date" style="display: block; margin-bottom: 0.5rem; color: var(--primary-color); font-weight: 600;">${dateStr}</span>
+        <h1 class="single-post-title" style="font-size: 2.5rem; color: var(--heading-color); margin-bottom: 1rem;">${post.title || 'Untitled Post'}</h1>
+      </header>
+      <div class="single-post-content" style="font-size: 1.1rem; line-height: 1.8; color: var(--text-color);">
+        ${post.content || '<p>No content available.</p>'}
+      </div>
+    </article>
+  `;
 }
