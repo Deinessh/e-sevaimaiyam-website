@@ -750,6 +750,7 @@ if (appForm) {
   const phoneVal = document.getElementById('user-phone').value.trim();
   const emailVal = document.getElementById('user-email') ? document.getElementById('user-email').value.trim() : '';
   const serviceVal = document.getElementById('service-select').value;
+  const messageVal = document.getElementById('user-message') ? document.getElementById('user-message').value.trim() : '';
   const dateVal = document.getElementById('appointment-date').value;
   const timeVal = document.getElementById('appointment-time').options[document.getElementById('appointment-time').selectedIndex].text;
 
@@ -787,6 +788,7 @@ if (appForm) {
         phone: phoneVal,
         email: emailVal,
         service: serviceVal,
+        notes: messageVal,
         date: dateVal,
         time: timeVal,
         ticket_id: randomRef
