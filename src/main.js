@@ -748,6 +748,7 @@ if (appForm) {
   // Validate contact info fields in Step 3
   const nameVal = document.getElementById('user-name').value.trim();
   const phoneVal = document.getElementById('user-phone').value.trim();
+  const emailVal = document.getElementById('user-email') ? document.getElementById('user-email').value.trim() : '';
   const serviceVal = document.getElementById('service-select').value;
   const dateVal = document.getElementById('appointment-date').value;
   const timeVal = document.getElementById('appointment-time').options[document.getElementById('appointment-time').selectedIndex].text;
@@ -774,6 +775,26 @@ if (appForm) {
       appointmentString = `${dateFormatted} at ${timeVal}`;
     }
 
+    // Post data to CRM Inbox API
+    fetch('https://crm.esevaimaiyam.com/api/appointments', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({
+        name: nameVal,
+        phone: phoneVal,
+        email: emailVal,
+        service: serviceVal,
+        date: dateVal,
+        time: timeVal,
+        ticket_id: randomRef
+      })
+    }).then(res => res.json())
+      .then(data => console.log('Appointment synced to CRM Inbox:', data))
+      .catch(err => console.warn('CRM sync warning:', err));
+
     // Set success fields
     sUserName.textContent = nameVal;
     sServiceName.textContent = serviceVal;
@@ -787,7 +808,7 @@ if (appForm) {
     successCard.classList.remove('hidden');
     formSubmitBtn.disabled = false;
     formSubmitBtn.innerHTML = originalText;
-  }, 1200);
+  }, 1000);
 });
 } // Close if(appForm)
 
