@@ -439,21 +439,29 @@ window.addEventListener('scroll', () => {
     }
   }
 
-  // Active section highlights in Navbar
-  let currentSecId = 'home';
-  sections.forEach(section => {
-    const sectionTop = section.offsetTop - 120;
-    if (window.scrollY >= sectionTop) {
-      currentSecId = section.getAttribute('id');
-    }
-  });
+  // Active section highlights in Navbar (ONLY on Home Page)
+  const path = window.location.pathname;
+  const isHomePage = path.endsWith('index.html') || path === '/' || path.endsWith('/');
+  if (isHomePage && sections.length > 0) {
+    let currentSecId = 'home';
+    sections.forEach(section => {
+      const sectionTop = section.offsetTop - 120;
+      if (window.scrollY >= sectionTop) {
+        currentSecId = section.getAttribute('id');
+      }
+    });
 
-  navItems.forEach(item => {
-    item.classList.remove('active');
-    if (item.getAttribute('href') === `#${currentSecId}`) {
-      item.classList.add('active');
+    if (currentSecId) {
+      navItems.forEach(item => {
+        const href = item.getAttribute('href') || '';
+        if (href === `#${currentSecId}` || href === `index.html#${currentSecId}`) {
+          item.classList.add('active');
+        } else if (href.startsWith('#') || href.startsWith('index.html#')) {
+          item.classList.remove('active');
+        }
+      });
     }
-  });
+  }
 });
 
 
