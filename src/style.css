@@ -3382,3 +3382,37 @@ body.dark-mode .brand-logo-img {
   border-color: rgba(220, 38, 38, 0.2);
 }
 
+/* CTA Banner Contrast Overrides */
+.cta-banner-dark {
+  padding: 3.5rem 0;
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%) !important;
+  color: #ffffff !important;
+}
+
+.cta-banner-dark h1,
+.cta-banner-dark h2,
+.cta-banner-dark h3,
+.cta-banner-dark h4,
+.cta-banner-dark p,
+.cta-banner-dark span {
+  color: #ffffff !important;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+}
+
+.cta-banner-blue {
+  padding: 3.5rem 0;
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+  color: #ffffff !important;
+}
+
+.cta-banner-blue h1,
+.cta-banner-blue h2,
+.cta-banner-blue h3,
+.cta-banner-blue h4,
+.cta-banner-blue p,
+.cta-banner-blue span {
+  color: #ffffff !important;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+}
+
+

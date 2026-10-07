@@ -826,8 +826,32 @@ if (newBookingBtn) {
 }
 
 // --------------------------------------------------
-// Blog Fetch Logic
+// Blog Fetch Logic & Fallback Updates
 // --------------------------------------------------
+const FALLBACK_POSTS = [
+  {
+    id: 1,
+    title: 'Aadhaar Demographic Update & Document Linking Campaign',
+    content: '<p>UIDAI has activated online document upload support for identity and address verification. Ensure your details are verified and your phone number is linked to prevent pension and smart card service interruptions.</p><p>Visit E-Sevai Maiyam Minjur with your original Aadhaar and updated proof of address to complete your update in 5 minutes.</p>',
+    published_at: '2026-06-15',
+    image: '/documentation-assist.png'
+  },
+  {
+    id: 2,
+    title: 'TNPL Recruitment - Operations & Engineering Executives',
+    content: '<p>Tamil Nadu Newsprint and Papers Limited (TNPL) is hiring Executive Directors and Senior Operations staff. Qualifications require a Bachelor\'s Degree in Engineering or PG Diploma in Pulp & Paper Tech.</p><p>Applications can be submitted at our center with document pre-verification support.</p>',
+    published_at: '2026-05-28',
+    image: '/services-illustration.png'
+  },
+  {
+    id: 3,
+    title: 'Supreme Court Court Master Recruitment 2026',
+    content: '<p>Applications invited for Supreme Court Court Master posts. Requirements include proficiency in English shorthand (120 wpm) and typing (40 wpm), a Law degree, and a minimum of 5 years PA/PS service in courts.</p><p>Apply through E-Sevai Maiyam Minjur online portal service.</p>',
+    published_at: '2026-05-10',
+    image: '/security-portal.png'
+  }
+];
+
 const blogPostsContainer = document.getElementById('blog-posts-container');
 
 if (blogPostsContainer) {
@@ -863,7 +887,7 @@ async function fetchBlogPosts() {
       if (response.ok) {
         const json = await response.json();
         const extracted = Array.isArray(json) ? json : (json.data || json.posts || json.result || null);
-        if (Array.isArray(extracted)) {
+        if (Array.isArray(extracted) && extracted.length > 0) {
           rawPosts = extracted;
           try {
             originHost = new URL(url).origin;
@@ -876,19 +900,9 @@ async function fetchBlogPosts() {
     }
   }
 
-  if (!rawPosts) {
-    blogPostsContainer.innerHTML = `
-      <div class="blog-error">
-        <p style="margin-bottom: 1rem;">Failed to load posts. Please try again later.</p>
-        <button onclick="window.location.reload()" class="btn btn-primary btn-sm">Retry Loading</button>
-      </div>
-    `;
-    return;
-  }
-
-  if (rawPosts.length === 0) {
-    blogPostsContainer.innerHTML = '<div class="blog-error">No updates or articles published yet. Check back soon!</div>';
-    return;
+  // Use fallback posts if API fetch failed or returned empty
+  if (!rawPosts || rawPosts.length === 0) {
+    rawPosts = FALLBACK_POSTS;
   }
 
   blogPostsContainer.innerHTML = rawPosts.map((post, index) => {
@@ -898,7 +912,7 @@ async function fetchBlogPosts() {
     
     let imageUrl = post.image || '';
     if (imageUrl && imageUrl.startsWith('/')) {
-      imageUrl = `${originHost}${imageUrl}`;
+      imageUrl = imageUrl.includes('http') ? imageUrl : `${imageUrl}`;
     }
 
     const postUrl = `post.html?id=${post.id || index}`;
@@ -962,7 +976,7 @@ async function fetchSinglePost() {
       if (response.ok) {
         const json = await response.json();
         const extracted = Array.isArray(json) ? json : (json.data || json.posts || json.result || null);
-        if (Array.isArray(extracted)) {
+        if (Array.isArray(extracted) && extracted.length > 0) {
           rawPosts = extracted;
           try {
             originHost = new URL(url).origin;
@@ -976,8 +990,7 @@ async function fetchSinglePost() {
   }
 
   if (!rawPosts || rawPosts.length === 0) {
-    singlePostContainer.innerHTML = '<div class="blog-error">Failed to load post. Please try again later.</div>';
-    return;
+    rawPosts = FALLBACK_POSTS;
   }
 
   // Find the specific post by id or index
@@ -987,12 +1000,9 @@ async function fetchSinglePost() {
     const index = parseInt(postIdOrIndex, 10);
     if (!isNaN(index) && index >= 0 && index < rawPosts.length) {
       post = rawPosts[index];
+    } else {
+      post = rawPosts[0];
     }
-  }
-
-  if (!post) {
-    singlePostContainer.innerHTML = '<div class="blog-error">Post not found.</div>';
-    return;
   }
 
   const dateStr = post.published_at 
@@ -1000,9 +1010,6 @@ async function fetchSinglePost() {
     : (post.created_at ? new Date(post.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Recently');
   
   let imageUrl = post.image || '';
-  if (imageUrl && imageUrl.startsWith('/')) {
-    imageUrl = `${originHost}${imageUrl}`;
-  }
 
   const imageHtml = imageUrl 
     ? `<div class="blog-card-image" style="max-height: 400px; overflow: hidden; border-radius: var(--border-radius-lg); margin-bottom: 2rem;"><img src="${imageUrl}" alt="${post.title || 'Blog update'}" style="width: 100%; height: auto; object-fit: cover;"></div>` 
