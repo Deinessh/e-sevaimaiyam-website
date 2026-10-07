@@ -840,7 +840,8 @@ async function fetchBlogPosts() {
   const endpoints = [
     import.meta.env.VITE_API_URL,
     'https://admin.esevaimaiyam.com/api/posts',
-    'https://e-sevaimaiyam-admin-production.up.railway.app/api/posts',
+    '/e-sevaimaiyam-admin/public/api/posts',
+    '/e-sevaimaiyam-admin/api/posts',
     '/api/posts'
   ].filter(Boolean);
 
