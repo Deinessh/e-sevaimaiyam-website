@@ -918,16 +918,26 @@ async function fetchBlogPosts() {
       ? new Date(post.published_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
       : (post.created_at ? new Date(post.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Recently');
     
-    let imageUrl = post.image || '';
-    if (imageUrl && imageUrl.startsWith('/')) {
-      imageUrl = imageUrl.includes('http') ? imageUrl : `${imageUrl}`;
+    let imageUrl = post.image || post.featured_image || post.cover_image || post.image_url || post.thumbnail || '';
+    if (imageUrl) {
+      if (!imageUrl.startsWith('http://') && !imageUrl.startsWith('https://')) {
+        const isLocalAsset = imageUrl.startsWith('/documentation-assist') || 
+                             imageUrl.startsWith('/services-illustration') || 
+                             imageUrl.startsWith('/security-portal') ||
+                             imageUrl.startsWith('/hero-banner');
+        if (!isLocalAsset) {
+          const path = imageUrl.startsWith('/') ? imageUrl : `/${imageUrl}`;
+          imageUrl = `${originHost}${path}`;
+        }
+      }
     }
 
     const postUrl = `post.html?id=${post.id || index}`;
+    const fallbackImg = '/services-illustration.png';
 
     const imageHtml = imageUrl 
-      ? `<div class="blog-card-image"><a href="${postUrl}"><img src="${imageUrl}" alt="${post.title || 'Blog update'}"></a></div>` 
-      : '';
+      ? `<div class="blog-card-image"><a href="${postUrl}"><img src="${imageUrl}" alt="${post.title || 'Blog update'}" onerror="this.onerror=null; this.src='${fallbackImg}';"></a></div>` 
+      : `<div class="blog-card-image"><a href="${postUrl}"><img src="${fallbackImg}" alt="${post.title || 'Blog update'}"></a></div>`;
     
     return `
       <div class="blog-card">
@@ -1017,11 +1027,28 @@ async function fetchSinglePost() {
     ? new Date(post.published_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
     : (post.created_at ? new Date(post.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Recently');
   
-  let imageUrl = post.image || '';
+  let imageUrl = post.image || post.featured_image || post.cover_image || post.image_url || post.thumbnail || '';
+  if (imageUrl) {
+    if (!imageUrl.startsWith('http://') && !imageUrl.startsWith('https://')) {
+      const isLocalAsset = imageUrl.startsWith('/documentation-assist') || 
+                           imageUrl.startsWith('/services-illustration') || 
+                           imageUrl.startsWith('/security-portal') ||
+                           imageUrl.startsWith('/hero-banner');
+      if (!isLocalAsset) {
+        const path = imageUrl.startsWith('/') ? imageUrl : `/${imageUrl}`;
+        imageUrl = `${originHost}${path}`;
+      }
+    }
+  }
 
-  const imageHtml = imageUrl 
-    ? `<div class="blog-card-image" style="max-height: 400px; overflow: hidden; border-radius: var(--border-radius-lg); margin-bottom: 2rem;"><img src="${imageUrl}" alt="${post.title || 'Blog update'}" style="width: 100%; height: auto; object-fit: cover;"></div>` 
-    : '';
+  const fallbackImg = '/services-illustration.png';
+  const displayImage = imageUrl || fallbackImg;
+
+  const imageHtml = `
+    <div class="blog-card-image" style="max-height: 400px; overflow: hidden; border-radius: var(--border-radius-lg); margin-bottom: 2rem;">
+      <img src="${displayImage}" alt="${post.title || 'Blog update'}" style="width: 100%; height: auto; object-fit: cover;" onerror="this.onerror=null; this.src='${fallbackImg}';">
+    </div>
+  `;
 
   singlePostContainer.innerHTML = `
     <article class="single-post">
